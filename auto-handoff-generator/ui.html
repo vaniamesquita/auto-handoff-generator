@@ -1,0 +1,1751 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Auto Handoff Generator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 11px;
+      color: #1a1a1a;
+      background: #ffffff;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .header-icon {
+      width: 32px;
+      height: 32px;
+      background: #f0f4ff;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .header-icon svg {
+      width: 16px;
+      height: 16px;
+      color: #3b82f6;
+    }
+
+    .header-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .header-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1a1a1a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .header-subtitle {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 1px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0 16px;
+    }
+
+    .tab {
+      padding: 10px 12px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.15s ease;
+    }
+
+    .tab:hover {
+      color: #3b82f6;
+    }
+
+    .tab.active {
+      color: #3b82f6;
+      border-bottom-color: #3b82f6;
+    }
+
+    /* Content */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Section Item */
+    .section-item {
+      padding: 10px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .section-item:last-child {
+      border-bottom: none;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .section-icon {
+      width: 18px;
+      height: 18px;
+      color: #9ca3af;
+      flex-shrink: 0;
+      margin-top: 1px;
+      transition: color 0.15s ease;
+    }
+
+    .section-item.active .section-icon {
+      color: #3b82f6;
+    }
+
+    .section-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: #1a1a1a;
+    }
+
+    .section-description {
+      font-size: 10px;
+      color: #9ca3af;
+      margin-top: 1px;
+    }
+
+    .section-toggle-link {
+      font-size: 10px;
+      color: #3b82f6;
+      cursor: pointer;
+      margin-top: 3px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .section-toggle-link:hover {
+      text-decoration: underline;
+    }
+
+    .section-toggle-link svg {
+      width: 10px;
+      height: 10px;
+      transition: transform 0.2s ease;
+    }
+
+    .section-toggle-link.expanded svg {
+      transform: rotate(180deg);
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #e5e7eb;
+      transition: 0.2s;
+      border-radius: 20px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: 0.2s;
+      border-radius: 50%;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    input:checked+.toggle-slider {
+      background-color: #3b82f6;
+    }
+
+    input:checked+.toggle-slider:before {
+      transform: translateX(16px);
+    }
+
+    /* Section Options (expandable) */
+    .section-options {
+      display: none;
+      margin-top: 10px;
+      margin-left: 28px;
+      padding: 12px;
+      background: #fafafa;
+      border-radius: 6px;
+    }
+
+    .section-options.expanded {
+      display: block;
+    }
+
+    /* View Mode Selector */
+    .view-mode-label {
+      font-size: 10px;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+
+    .view-mode-buttons {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .view-mode-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .view-mode-btn:hover {
+      border-color: #3b82f6;
+    }
+
+    .view-mode-btn.selected {
+      background: #eff6ff;
+      border-color: #3b82f6;
+      color: #3b82f6;
+    }
+
+    .view-mode-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .view-mode-btn .check-icon {
+      width: 14px;
+      height: 14px;
+      display: none;
+    }
+
+    .view-mode-btn.selected .check-icon {
+      display: block;
+    }
+
+    /* Variant Filters */
+    .variant-filters-label {
+      font-size: 10px;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+
+    .variant-accordion {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+
+    .variant-accordion:last-child {
+      margin-bottom: 0;
+    }
+
+    .variant-accordion-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .variant-accordion-header:hover {
+      background: #f9fafb;
+    }
+
+    .variant-accordion-title {
+      font-size: 11px;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .variant-accordion-chevron {
+      width: 14px;
+      height: 14px;
+      color: #9ca3af;
+      transition: transform 0.2s ease;
+    }
+
+    .variant-accordion.expanded .variant-accordion-chevron {
+      transform: rotate(180deg);
+    }
+
+    .variant-accordion-content {
+      display: none;
+      padding: 0 10px 10px;
+    }
+
+    .variant-accordion.expanded .variant-accordion-content {
+      display: block;
+    }
+
+    .variant-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: #f3f4f6;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+    }
+
+    .variant-chip:last-child {
+      margin-bottom: 0;
+    }
+
+    .variant-chip:hover {
+      background: #e5e7eb;
+    }
+
+    .variant-chip.selected {
+      background: #eff6ff;
+      border-color: #3b82f6;
+    }
+
+    .variant-chip input {
+      display: none;
+    }
+
+    .variant-chip-check {
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .variant-chip.selected .variant-chip-check {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+
+    .variant-chip-check svg {
+      width: 10px;
+      height: 10px;
+      color: white;
+      display: none;
+    }
+
+    .variant-chip.selected .variant-chip-check svg {
+      display: block;
+    }
+
+    .variant-chip-label {
+      font-size: 11px;
+      color: #374151;
+    }
+
+    .variant-chip.selected .variant-chip-label {
+      color: #3b82f6;
+    }
+
+    /* Grid Density Setting */
+    .grid-density-setting {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .grid-density-setting:first-child {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+
+    .grid-density-label {
+      font-size: 11px;
+      color: #374151;
+    }
+
+    .grid-density-input {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .grid-density-input input {
+      width: 50px;
+      padding: 4px 8px;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      font-size: 11px;
+      text-align: center;
+      color: #1a1a1a;
+    }
+
+    .grid-density-input input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    /* Checkbox Option */
+    .checkbox-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 0;
+      cursor: pointer;
+    }
+
+    .checkbox-box {
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+    }
+
+    .checkbox-option.checked .checkbox-box {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+
+    .checkbox-box svg {
+      width: 10px;
+      height: 10px;
+      color: white;
+      display: none;
+    }
+
+    .checkbox-option.checked .checkbox-box svg {
+      display: block;
+    }
+
+    .checkbox-label {
+      font-size: 11px;
+      color: #374151;
+    }
+
+    /* Layout Settings */
+    .layout-setting {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .layout-setting:last-child {
+      border-bottom: none;
+    }
+
+    .layout-setting-label {
+      font-size: 12px;
+      color: #374151;
+    }
+
+    .layout-setting-input {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .layout-setting-input input {
+      width: 60px;
+      padding: 6px 8px;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      font-size: 12px;
+      text-align: right;
+      color: #1a1a1a;
+    }
+
+    .layout-setting-input input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    .layout-setting-unit {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    /* Color input */
+    .color-input {
+      position: relative;
+    }
+
+    .color-input .color-hash {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-right: 2px;
+    }
+
+    .color-input input {
+      width: 70px;
+      text-align: left;
+      font-family: monospace;
+      text-transform: uppercase;
+    }
+
+    .color-preview {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      border: 1px solid #e5e7eb;
+      margin-left: 8px;
+    }
+
+    /* Assets Tab */
+    .assets-section {
+      margin-bottom: 20px;
+    }
+
+    .assets-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .assets-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .assets-grid-medida {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .asset-card {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+
+    .asset-card:hover {
+      background: #f3f4f6;
+      border-color: #3b82f6;
+    }
+
+    .asset-card.selected {
+      background: #eff6ff;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    .assets-add-section {
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    .assets-add-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #3b82f6;
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .assets-add-link:hover {
+      background: #eff6ff;
+      text-decoration: none;
+    }
+
+    .assets-add-link svg {
+      flex-shrink: 0;
+    }
+
+    .asset-preview {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .asset-label {
+      font-size: 11px;
+      color: #374151;
+    }
+
+    /* Measure preview */
+    .measure-preview {
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .measure-line {
+      width: 50px;
+      height: 2px;
+      background: #dc2626;
+      position: relative;
+    }
+
+    .measure-line::before,
+    .measure-line::after {
+      content: '';
+      position: absolute;
+      width: 2px;
+      height: 10px;
+      background: #dc2626;
+      top: -4px;
+    }
+
+    .measure-line::before {
+      left: 0;
+    }
+
+    .measure-line::after {
+      right: 0;
+    }
+
+    .measure-badge {
+      background: #dc2626;
+      color: white;
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    /* Gap preview */
+    .gap-preview {
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .gap-area {
+      width: 50px;
+      height: 20px;
+      background: rgba(236, 72, 153, 0.2);
+      border: 1px dashed #ec4899;
+      border-radius: 2px;
+    }
+
+    .gap-badge {
+      background: #ec4899;
+      color: white;
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    /* Padding preview */
+    .padding-preview {
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .padding-area {
+      width: 50px;
+      height: 20px;
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px dashed #3b82f6;
+      border-radius: 2px;
+    }
+
+    .padding-badge {
+      background: #3b82f6;
+      color: white;
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    /* Pointer preview */
+    .pointer-preview {
+      flex-direction: column;
+      gap: 0px;
+    }
+
+    .pointer-preview.pointer-horizontal {
+      flex-direction: row;
+      gap: 0px;
+    }
+
+    .pointer-preview.pointer-bottom {
+      flex-direction: column;
+    }
+
+    .pointer-dot {
+      width: 8px;
+      height: 8px;
+      background: #dc2626;
+      border-radius: 50%;
+    }
+
+    .pointer-line-v {
+      width: 1px;
+      height: 15px;
+      background: #dc2626;
+    }
+
+    .pointer-line-h {
+      width: 15px;
+      height: 1px;
+      background: #dc2626;
+    }
+
+    .pointer-label {
+      font-size: 9px;
+      color: #dc2626;
+    }
+
+    /* Asset options */
+    .asset-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .asset-options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 12px;
+    }
+
+    .asset-option-compact {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .asset-option-compact label {
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    .asset-option-compact input,
+    .asset-option-compact select {
+      width: 100%;
+
+      padding: 6px 8px;
+      font-size: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      background: white;
+    }
+
+    .asset-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .asset-option label {
+      font-size: 12px;
+      color: #374151;
+    }
+
+    .asset-option-checkbox {
+      justify-content: flex-start;
+      margin-top: 12px;
+    }
+
+    .asset-option-checkbox .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .asset-option-checkbox input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .asset-option input,
+    .asset-option select {
+      width: 140px;
+      padding: 6px 8px;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .asset-option input:focus,
+    .asset-option select:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 12px 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    .btn-generate {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 16px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-generate:hover {
+      background: #2563eb;
+    }
+
+    .btn-generate:disabled {
+      background: #93c5fd;
+      cursor: not-allowed;
+    }
+
+    .btn-generate svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Scrollbar */
+    .content::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .content::-webkit-scrollbar-thumb {
+      background: #e5e7eb;
+      border-radius: 2px;
+    }
+
+    .content::-webkit-scrollbar-thumb:hover {
+      background: #d1d5db;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7"></rect>
+        <rect x="14" y="3" width="7" height="7"></rect>
+        <rect x="14" y="14" width="7" height="7"></rect>
+        <rect x="3" y="14" width="7" height="7"></rect>
+      </svg>
+    </div>
+    <div class="header-info">
+      <div class="header-title" id="componentName">Selecione um componente</div>
+      <div class="header-subtitle" id="componentType">-</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="data">Seções</div>
+    <div class="tab" data-tab="layout">Layout</div>
+    <div class="tab" data-tab="assets">Assets</div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+    <!-- Data Tab -->
+    <div class="tab-panel active" id="data">
+      <!-- Cores -->
+      <div class="section-item active" data-section="sectionColors">
+        <div class="section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="13.5" cy="6.5" r="0.5" fill="currentColor"></circle>
+            <circle cx="17.5" cy="10.5" r="0.5" fill="currentColor"></circle>
+            <circle cx="8.5" cy="7.5" r="0.5" fill="currentColor"></circle>
+            <circle cx="6.5" cy="12.5" r="0.5" fill="currentColor"></circle>
+            <path
+              d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z">
+            </path>
+          </svg>
+          <div class="section-info">
+            <div class="section-title">Cores</div>
+            <div class="section-description">Tabela de Tokens de Cor</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="sectionColors" checked onchange="updateSectionState(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Tipografia -->
+      <div class="section-item active" data-section="sectionText">
+        <div class="section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 7 4 4 20 4 20 7"></polyline>
+            <line x1="9" y1="20" x2="15" y2="20"></line>
+            <line x1="12" y1="4" x2="12" y2="20"></line>
+          </svg>
+          <div class="section-info">
+            <div class="section-title">Tipografia</div>
+            <div class="section-description">Mapeamento de Tokens/Valor de Texto</div>
+            <span class="section-toggle-link" onclick="toggleSectionOptions('typography')">
+              <span class="toggle-text">Mostrar opções</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </span>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="sectionText" checked onchange="updateSectionState(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="section-options" id="typographyOptions">
+          <div class="view-mode-label">Gerar:</div>
+          <div class="view-mode-buttons">
+            <button type="button" class="view-mode-btn selected" id="textTableBtn"
+              onclick="toggleViewMode('text', 'table')">
+              <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="3" y1="15" x2="21" y2="15"></line>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+              </svg>
+              <span>Tabela</span>
+            </button>
+            <button type="button" class="view-mode-btn selected" id="textCanvasBtn"
+              onclick="toggleViewMode('text', 'canvas')">
+              <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <span>Visualização</span>
+            </button>
+          </div>
+          <div class="variant-filters-label">Filtrar por variantes:</div>
+          <div id="textVariantFilters">
+            <!-- Dynamic variant accordions will be inserted here -->
+          </div>
+          <div class="grid-density-setting">
+            <span class="grid-density-label">Componentes por linha</span>
+            <div class="grid-density-input">
+              <input type="number" id="textFramesPerRow" value="2" min="1" max="8">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medidas e Espaçamentos -->
+      <div class="section-item active" data-section="sectionSpacing">
+        <div class="section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+          <div class="section-info">
+            <div class="section-title">Medidas e Espaçamentos</div>
+            <div class="section-description">Padding, Gaps, Radius, Size e Stroke</div>
+            <span class="section-toggle-link" onclick="toggleSectionOptions('measurements')">
+              <span class="toggle-text">Mostrar opções</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </span>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="sectionSpacing" checked onchange="updateSectionState(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="section-options" id="measurementsOptions">
+          <div class="view-mode-label">Gerar:</div>
+          <div class="view-mode-buttons">
+            <button type="button" class="view-mode-btn selected" id="spacingTableBtn"
+              onclick="toggleViewMode('spacing', 'table')">
+              <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="3" y1="15" x2="21" y2="15"></line>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+              </svg>
+              <span>Tabela</span>
+            </button>
+            <button type="button" class="view-mode-btn selected" id="spacingCanvasBtn"
+              onclick="toggleViewMode('spacing', 'canvas')">
+              <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <span>Visualização</span>
+            </button>
+          </div>
+          <div class="variant-filters-label">Filtrar por variantes:</div>
+          <div id="spacingVariantFilters">
+            <!-- Dynamic variant accordions will be inserted here -->
+          </div>
+          <div class="grid-density-setting">
+            <span class="grid-density-label">Componentes por linha</span>
+            <div class="grid-density-input">
+              <input type="number" id="spacingFramesPerRow" value="2" min="1" max="8">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Efeitos (Shadows, Blur, etc.) -->
+      <div class="section-item" data-section="sectionEffects">
+        <div class="section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="4"></circle>
+            <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line>
+            <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line>
+            <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"></line>
+            <line x1="4.93" y1="19.07" x2="9.17" y2="14.83"></line>
+          </svg>
+          <div class="section-info">
+            <div class="section-title">Efeitos</div>
+            <div class="section-description">Shadows, Blur e outros efeitos</div>
+            <span class="section-toggle-link" onclick="toggleSectionOptions('effects')">
+              <span class="toggle-text">Mostrar opções</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </span>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="sectionEffects" onchange="updateSectionState(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="section-options" id="effectsOptions">
+          <div class="view-mode-label">Gerar:</div>
+          <div class="view-mode-buttons">
+            <button type="button" class="view-mode-btn selected" id="effectsTableBtn"
+              onclick="toggleViewMode('effects', 'table')">
+              <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="3" y1="15" x2="21" y2="15"></line>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+              </svg>
+              <span>Tabela</span>
+            </button>
+            <button type="button" class="view-mode-btn selected" id="effectsCanvasBtn"
+              onclick="toggleViewMode('effects', 'canvas')">
+              <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <span>Visualização</span>
+            </button>
+          </div>
+          <div class="variant-filters-label">Filtrar por variantes:</div>
+          <div id="effectsVariantFilters">
+            <!-- Dynamic variant accordions will be inserted here -->
+          </div>
+          <div class="grid-density-setting">
+            <span class="grid-density-label">Componentes por linha</span>
+            <div class="grid-density-input">
+              <input type="number" id="effectsFramesPerRow" value="2" min="1" max="8">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dependências -->
+      <div class="section-item" data-section="sectionComponents">
+        <div class="section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M12.5 3.28a1 1 0 0 0-1 0l-7 4a1 1 0 0 0-.5.86V16a1 1 0 0 0 .5.86l7 4a1 1 0 0 0 1 0l7-4a1 1 0 0 0 .5-.86V8a1 1 0 0 0-.5-.86z">
+            </path>
+            <path d="M12 12v9"></path>
+            <path d="m12 12 8-4.5"></path>
+            <path d="m12 12-8-4.5"></path>
+            <path d="m12 12 8 4.5"></path>
+            <path d="m12 12-8 4.5"></path>
+          </svg>
+          <div class="section-info">
+            <div class="section-title">Dependências</div>
+            <div class="section-description">Componentes e ícones utilizados</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="sectionComponents" onchange="updateSectionState(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Estados -->
+      <div class="section-item active" data-section="sectionEstados">
+        <div class="section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="1" y="5" width="6" height="14" rx="2"></rect>
+            <rect x="9" y="5" width="6" height="14" rx="2"></rect>
+            <rect x="17" y="5" width="6" height="14" rx="2"></rect>
+          </svg>
+          <div class="section-info">
+            <div class="section-title">Estados</div>
+            <div class="section-description">Visualização de todas as variantes</div>
+            <span class="section-toggle-link" onclick="toggleSectionOptions('states')">
+              <span class="toggle-text">Mostrar opções</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </span>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="sectionEstados" checked onchange="updateSectionState(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="section-options" id="statesOptions">
+          <div class="grid-density-setting" style="margin-top: 0; padding-top: 0; border-top: none;">
+            <span class="grid-density-label">Componentes por linha</span>
+            <div class="grid-density-input">
+              <input type="number" id="gridDensity" value="4" min="1" max="8">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Propriedades do Componente -->
+      <div class="section-item active" data-section="sectionProperties">
+        <div class="section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <div class="section-info">
+            <div class="section-title">Propriedades do Componente</div>
+            <div class="section-description">Listagem de propriedades e valores</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="sectionProperties" checked onchange="updateSectionState(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- On-highlight Option -->
+      <div class="checkbox-option" id="highlightOption" onclick="toggleHighlight()">
+        <div class="checkbox-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+            stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <span class="checkbox-label">On-Highlight (para visualizações)</span>
+        <input type="checkbox" id="highlightMode" style="display: none;">
+      </div>
+    </div>
+
+    <!-- Layout Tab -->
+    <div class="tab-panel" id="layout">
+      <div class="layout-setting">
+        <span class="layout-setting-label">Largura do frame</span>
+        <div class="layout-setting-input">
+          <input type="number" id="frameWidth" value="1140" min="600" max="2400" step="50">
+          <span class="layout-setting-unit">px</span>
+        </div>
+      </div>
+      <div class="layout-setting">
+        <span class="layout-setting-label">Padding horizontal</span>
+        <div class="layout-setting-input">
+          <input type="number" id="paddingHorizontal" value="64" min="0" max="200" step="8">
+          <span class="layout-setting-unit">px</span>
+        </div>
+      </div>
+      <div class="layout-setting">
+        <span class="layout-setting-label">Espaçamento entre seções</span>
+        <div class="layout-setting-input">
+          <input type="number" id="sectionSpacingInput" value="48" min="0" max="100" step="8">
+          <span class="layout-setting-unit">px</span>
+        </div>
+      </div>
+      <div class="layout-setting">
+        <span class="layout-setting-label">Cor de fundo</span>
+        <div class="layout-setting-input color-input">
+          <span class="color-hash">#</span>
+          <input type="text" id="bgColor" value="F4F5F7" maxlength="6" placeholder="F4F5F7"
+            oninput="updateColorPreview(this)">
+          <div class="color-preview" id="bgColorPreview" style="background-color: #F4F5F7;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assets Tab -->
+    <div class="tab-panel" id="assets">
+      <div class="assets-section">
+        <div class="assets-section-title">Medidas</div>
+        <div class="assets-grid-medida">
+          <div class="asset-card" data-asset="measure" onclick="selectAsset(this, 'measure')">
+            <div class="asset-preview measure-preview">
+              <div class="measure-line"></div>
+              <div class="measure-badge">24</div>
+            </div>
+            <div class="asset-label">Medida</div>
+          </div>
+          <div class="asset-card" data-asset="gap" onclick="selectAsset(this, 'gap')">
+            <div class="asset-preview gap-preview">
+              <div class="gap-area"></div>
+              <div class="gap-badge">48</div>
+            </div>
+            <div class="asset-label">Gap</div>
+          </div>
+          <div class="asset-card" data-asset="padding" onclick="selectAsset(this, 'padding')">
+            <div class="asset-preview padding-preview">
+              <div class="padding-area"></div>
+              <div class="padding-badge">48</div>
+            </div>
+            <div class="asset-label">Padding</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="assets-section">
+        <div class="assets-section-title">Pointers</div>
+        <div class="assets-grid">
+          <div class="asset-card" data-asset="pointer-top" onclick="selectAsset(this, 'pointer-top')">
+            <div class="asset-preview pointer-preview">
+              <div class="pointer-dot"></div>
+              <div class="pointer-line-v"></div>
+              <span class="pointer-label">caption</span>
+            </div>
+            <div class="asset-label">Top</div>
+          </div>
+          <div class="asset-card" data-asset="pointer-bottom" onclick="selectAsset(this, 'pointer-bottom')">
+            <div class="asset-preview pointer-preview pointer-bottom">
+              <span class="pointer-label">caption</span>
+              <div class="pointer-line-v"></div>
+              <div class="pointer-dot"></div>
+            </div>
+            <div class="asset-label">Bottom</div>
+          </div>
+          <div class="asset-card" data-asset="pointer-left" onclick="selectAsset(this, 'pointer-left')">
+            <div class="asset-preview pointer-preview pointer-horizontal">
+              <div class="pointer-dot"></div>
+              <div class="pointer-line-h"></div>
+              <span class="pointer-label">caption</span>
+            </div>
+            <div class="asset-label">Left</div>
+          </div>
+          <div class="asset-card" data-asset="pointer-right" onclick="selectAsset(this, 'pointer-right')">
+            <div class="asset-preview pointer-preview pointer-horizontal">
+              <span class="pointer-label">caption</span>
+              <div class="pointer-line-h"></div>
+              <div class="pointer-dot"></div>
+            </div>
+            <div class="asset-label">Right</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="assets-section">
+        <!-- <div class="assets-section-title">Opções</div> -->
+        <div class="asset-options-grid">
+          <div class="asset-option-compact">
+            <label>Valor</label>
+            <input type="text" id="assetValue" value="0px" placeholder="0px">
+          </div>
+          <div class="asset-option-compact">
+            <label>Cor</label>
+            <select id="assetColor">
+              <option value="red">Vermelho</option>
+              <option value="blue">Azul</option>
+              <option value="pink">Rosa</option>
+              <option value="green">Verde</option>
+            </select>
+          </div>
+          <div class="asset-option-compact">
+            <label>Direção</label>
+            <select id="assetDirection">
+              <option value="horizontal">Horizontal</option>
+              <option value="vertical">Vertical</option>
+            </select>
+          </div>
+          <div class="asset-option-compact">
+            <label>Posição Badge</label>
+            <select id="assetBadgePosition">
+              <option value="bottom">Abaixo</option>
+              <option value="top">Acima</option>
+              <option value="left">Esquerda</option>
+              <option value="right">Direita</option>
+            </select>
+          </div>
+        </div>
+        <div class="asset-option-checkbox">
+          <label class="checkbox-label">
+            <input type="checkbox" id="assetHighlightMode">
+            <span>On-Highlight</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="assets-add-section">
+        <a href="#" class="assets-add-link" onclick="insertSelectedAsset(); return false;">
+          Adicionar asset no arquivo
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <button class="btn-generate" id="btnGenerate" onclick="generate()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+      </svg>
+      Gerar Especificações
+    </button>
+  </div>
+
+  <script>
+    // State management
+    let variantProperties = [];
+
+    // View mode state (table/canvas toggles)
+    const viewModes = {
+      text: { table: true, canvas: true },
+      spacing: { table: true, canvas: true },
+      effects: { table: true, canvas: true }
+    };
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+
+        // Hide/show footer based on active tab
+        const footer = document.querySelector('.footer');
+        if (tab.dataset.tab === 'assets') {
+          footer.style.display = 'none';
+        } else {
+          footer.style.display = 'block';
+        }
+      });
+    });
+
+    // Update section state (icon color)
+    function updateSectionState(checkbox) {
+      const sectionItem = checkbox.closest('.section-item');
+      if (checkbox.checked) {
+        sectionItem.classList.add('active');
+      } else {
+        sectionItem.classList.remove('active');
+      }
+    }
+
+    // Toggle section options visibility
+    function toggleSectionOptions(section) {
+      const optionsEl = document.getElementById(section + 'Options');
+      const linkEl = optionsEl.previousElementSibling.querySelector('.section-toggle-link');
+      const textEl = linkEl.querySelector('.toggle-text');
+
+      optionsEl.classList.toggle('expanded');
+      linkEl.classList.toggle('expanded');
+
+      if (optionsEl.classList.contains('expanded')) {
+        textEl.textContent = 'Ocultar opções';
+      } else {
+        textEl.textContent = 'Mostrar opções';
+      }
+    }
+
+    // Update color preview
+    function updateColorPreview(input) {
+      // Clean input - only allow hex characters
+      input.value = input.value.replace(/[^0-9A-Fa-f]/g, '').toUpperCase();
+
+      const color = input.value;
+      const preview = document.getElementById('bgColorPreview');
+
+      // Only update preview if we have a valid 6-char hex or 3-char hex
+      if (color.length === 6 || color.length === 3) {
+        preview.style.backgroundColor = '#' + color;
+      }
+    }
+
+    // Toggle view mode (table/canvas)
+    function toggleViewMode(section, mode) {
+      viewModes[section][mode] = !viewModes[section][mode];
+
+      let btnId;
+      if (section === 'text') {
+        btnId = mode === 'table' ? 'textTableBtn' : 'textCanvasBtn';
+      } else if (section === 'spacing') {
+        btnId = mode === 'table' ? 'spacingTableBtn' : 'spacingCanvasBtn';
+      } else if (section === 'effects') {
+        btnId = mode === 'table' ? 'effectsTableBtn' : 'effectsCanvasBtn';
+      }
+
+      const btn = document.getElementById(btnId);
+      btn.classList.toggle('selected', viewModes[section][mode]);
+    }
+
+    // Toggle highlight option
+    function toggleHighlight() {
+      const option = document.getElementById('highlightOption');
+      const checkbox = document.getElementById('highlightMode');
+      option.classList.toggle('checked');
+      checkbox.checked = option.classList.contains('checked');
+    }
+
+    // Toggle variant accordion
+    function toggleVariantAccordion(accordionEl) {
+      accordionEl.classList.toggle('expanded');
+    }
+
+    // Toggle variant chip selection
+    function toggleVariantChip(chipEl) {
+      chipEl.classList.toggle('selected');
+      const checkbox = chipEl.querySelector('input');
+      checkbox.checked = chipEl.classList.contains('selected');
+    }
+
+    // Render variant filters for a section
+    function renderVariantFilters(containerId, properties) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+
+      if (!properties || properties.length === 0) {
+        container.innerHTML = '<div style="font-size: 10px; color: #9ca3af; padding: 6px 0;">Nenhuma propriedade de variante disponível</div>';
+        return;
+      }
+
+      properties.forEach((prop, propIndex) => {
+        const accordion = document.createElement('div');
+        accordion.className = 'variant-accordion';
+        accordion.innerHTML = `
+          <div class="variant-accordion-header" onclick="toggleVariantAccordion(this.parentElement)">
+            <span class="variant-accordion-title">${prop.name}</span>
+            <svg class="variant-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="variant-accordion-content">
+            ${prop.values.map((value, valueIndex) => `
+              <div class="variant-chip selected" onclick="toggleVariantChip(this)">
+                <input type="checkbox" checked data-property="${prop.name}" data-value="${value}" data-container="${containerId}">
+                <div class="variant-chip-check">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+                <span class="variant-chip-label">${value}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        container.appendChild(accordion);
+      });
+    }
+
+    // Render variant properties for both sections
+    function renderVariantProperties(properties) {
+      variantProperties = properties;
+      renderVariantFilters('textVariantFilters', properties);
+      renderVariantFilters('spacingVariantFilters', properties);
+      renderVariantFilters('effectsVariantFilters', properties);
+    }
+
+    // Get selected properties for a section
+    function getSelectedPropsForSection(containerId) {
+      const selected = {};
+      document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`).forEach(cb => {
+        const prop = cb.dataset.property;
+        const value = cb.dataset.value;
+        if (prop && value) {
+          if (!selected[prop]) selected[prop] = [];
+          selected[prop].push(value);
+        }
+      });
+      return selected;
+    }
+
+    // Get all selected options
+    function getSelectedOptions() {
+      return {
+        // Sections
+        sectionColors: document.getElementById('sectionColors').checked,
+        sectionText: document.getElementById('sectionText').checked,
+        sectionSpacing: document.getElementById('sectionSpacing').checked,
+        sectionEffects: document.getElementById('sectionEffects').checked,
+        sectionComponents: document.getElementById('sectionComponents').checked,
+        sectionEstados: document.getElementById('sectionEstados').checked,
+        sectionProperties: document.getElementById('sectionProperties').checked,
+        // Settings
+        frameWidth: parseInt(document.getElementById('frameWidth').value) || 1140,
+        paddingHorizontal: parseInt(document.getElementById('paddingHorizontal').value) || 64,
+        sectionSpacingValue: parseInt(document.getElementById('sectionSpacingInput').value) || 48,
+        bgColor: document.getElementById('bgColor').value || 'FFFFFF',
+        // Visualization mode
+        highlightMode: document.getElementById('highlightMode').checked,
+        // View modes (table/canvas)
+        textShowTable: viewModes.text.table,
+        textShowViz: viewModes.text.canvas,
+        spacingShowTable: viewModes.spacing.table,
+        spacingShowViz: viewModes.spacing.canvas,
+        effectsShowTable: viewModes.effects.table,
+        effectsShowViz: viewModes.effects.canvas,
+        // Visualization property filters (per section)
+        textVizProperties: getSelectedPropsForSection('textVariantFilters'),
+        spacingVizProperties: getSelectedPropsForSection('spacingVariantFilters'),
+        effectsVizProperties: getSelectedPropsForSection('effectsVariantFilters'),
+        // Frames per row
+        textFramesPerRow: parseInt(document.getElementById('textFramesPerRow').value) || 2,
+        spacingFramesPerRow: parseInt(document.getElementById('spacingFramesPerRow').value) || 2,
+        effectsFramesPerRow: parseInt(document.getElementById('effectsFramesPerRow').value) || 2,
+        // Estados grid density
+        gridDensity: parseInt(document.getElementById('gridDensity').value) || 4
+      };
+    }
+
+    // Selected asset state
+    let selectedAssetType = 'measure';
+
+    // Select asset card
+    function selectAsset(element, assetType) {
+      // Remove selected from all cards
+      document.querySelectorAll('.asset-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+      // Add selected to clicked card
+      element.classList.add('selected');
+      selectedAssetType = assetType;
+    }
+
+    // Insert selected asset into Figma
+    function insertSelectedAsset() {
+      const value = document.getElementById('assetValue').value || '0px';
+      const color = document.getElementById('assetColor').value || 'red';
+      const direction = document.getElementById('assetDirection').value || 'horizontal';
+      const badgePosition = document.getElementById('assetBadgePosition').value || 'bottom';
+      const highlightMode = document.getElementById('assetHighlightMode').checked || false;
+
+      parent.postMessage({
+        pluginMessage: {
+          type: 'insert-asset',
+          assetType: selectedAssetType,
+          value: value,
+          color: color,
+          direction: direction,
+          badgePosition: badgePosition,
+          highlightMode: highlightMode
+        }
+      }, '*');
+    }
+
+    // Legacy insert asset (kept for compatibility)
+    function insertAsset(assetType) {
+      const value = document.getElementById('assetValue').value || '0px';
+      const color = document.getElementById('assetColor').value || 'red';
+      const direction = document.getElementById('assetDirection').value || 'horizontal';
+      const badgePosition = document.getElementById('assetBadgePosition').value || 'bottom';
+      const highlightMode = document.getElementById('assetHighlightMode').checked || false;
+
+      parent.postMessage({
+        pluginMessage: {
+          type: 'insert-asset',
+          assetType: assetType,
+          value: value,
+          color: color,
+          direction: direction,
+          badgePosition: badgePosition,
+          highlightMode: highlightMode
+        }
+      }, '*');
+    }
+
+    // Generate specifications
+    function generate() {
+      const options = getSelectedOptions();
+
+      // Check if at least one section is selected
+      const hasSelection = options.sectionColors || options.sectionText ||
+        options.sectionSpacing || options.sectionEffects || options.sectionComponents ||
+        options.sectionEstados || options.sectionProperties;
+
+      if (!hasSelection) {
+        alert('Selecione pelo menos uma seção para gerar.');
+        return;
+      }
+
+      parent.postMessage({ pluginMessage: { type: 'generate', options } }, '*');
+    }
+
+    // Listen for messages from plugin
+    window.onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      if (!msg) return;
+
+      if (msg.type === 'selection-info') {
+        document.getElementById('componentName').textContent = msg.text || 'Selecione um componente';
+        document.getElementById('componentType').textContent = '-';
+      } else if (msg.type === 'init') {
+        // Update component name in header
+        if (msg.componentName) {
+          document.getElementById('componentName').textContent = msg.componentName;
+          // Determine component type
+          let typeText = 'Componente';
+          if (msg.componentName.includes('/')) {
+            typeText = 'Conjunto de Componentes';
+          }
+          document.getElementById('componentType').textContent = typeText;
+        }
+        // Render variant properties if available
+        if (msg.variantProperties) {
+          renderVariantProperties(msg.variantProperties);
+        }
+      }
+    };
+  </script>
+</body>
+
+</html>
